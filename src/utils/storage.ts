@@ -46,3 +46,34 @@ export function loadEnabledDomains(): string[] {
 export function saveEnabledDomains(domains: string[]): void {
   gmSetValue(ENABLED_DOMAINS_KEY, JSON.stringify(domains))
 }
+
+interface SettingsExport {
+  version: number
+  bookmarks: Record<string, Bookmark[]>
+  enabledDomains: string[]
+}
+
+const SETTINGS_VERSION = 1
+
+/** 导出完整设置（书签 + 启用域名）为格式化 JSON 字符串 */
+export function exportSettings(): string {
+  const data: SettingsExport = {
+    version: SETTINGS_VERSION,
+    bookmarks: loadBookmarks(),
+    enabledDomains: loadEnabledDomains(),
+  }
+  return JSON.stringify(data, null, 2)
+}
+
+/** 从 JSON 字符串导入设置，格式非法时抛出错误 */
+export function importSettings(json: string): void {
+  const data = JSON.parse(json)
+  if (!data || typeof data !== 'object')
+    throw new TypeError('无效的设置文件')
+
+  if (data.bookmarks && typeof data.bookmarks === 'object')
+    saveBookmarks(data.bookmarks)
+
+  if (Array.isArray(data.enabledDomains))
+    saveEnabledDomains(data.enabledDomains)
+}

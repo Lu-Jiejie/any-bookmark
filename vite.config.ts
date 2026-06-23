@@ -17,6 +17,9 @@ export default defineConfig({
         // 仅在顶层窗口运行，避免注入到 iframe（如 GitHub 的 viewscreen 子域）
         noframes: true,
       },
+      server: {
+        mountGmApi: true,
+      },
       build: {
         externalGlobals: {
           vue: cdn.jsdelivr('Vue', 'dist/vue.global.prod.js'),

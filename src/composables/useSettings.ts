@@ -1,17 +1,19 @@
-import { GM_registerMenuCommand, GM_unregisterMenuCommand } from '$'
+import { GM_registerMenuCommand } from '$'
 import { computed, ref, watch } from 'vue'
-import { loadEnabledDomains, saveEnabledDomains } from '../utils/storage'
+import {
+  exportSettings,
+  importSettings,
+  loadEnabledDomains,
+  saveEnabledDomains,
+} from '../utils/storage'
 
 const currentDomain = location.hostname
-
-// 非油猴环境（如本地 dev）下无菜单可用，直接放行以便开发调试
-const isUserscript = typeof GM_registerMenuCommand !== 'undefined'
 
 const enabledDomains = ref<string[]>(loadEnabledDomains())
 
 /** 当前域名是否应展示书签按钮，默认禁用 */
 export const currentDomainEnabled = computed(
-  () => !isUserscript || enabledDomains.value.includes(currentDomain),
+  () => enabledDomains.value.includes(currentDomain),
 )
 
 function toggleCurrentDomain() {
@@ -25,11 +27,16 @@ function toggleCurrentDomain() {
   saveEnabledDomains(enabledDomains.value)
 }
 
-let menuId: number | string | undefined
 let initialized = false
 
+// 固定菜单 id：重复注册会替换原项而非新增，避免 toggle/HMR 产生重复菜单
+const TOGGLE_MENU_ID = 'any-bookmark-toggle-domain'
+const EXPORT_MENU_ID = 'any-bookmark-export'
+const IMPORT_MENU_ID = 'any-bookmark-import'
+
 function registerMenu() {
-  if (!isUserscript)
+  // 只要油猴提供了菜单 API 就注册（dev 在 Tampermonkey 下同样可用）
+  if (typeof GM_registerMenuCommand !== 'function')
     return
 
   const enabled = enabledDomains.value.includes(currentDomain)
@@ -37,10 +44,38 @@ function registerMenu() {
     ? `在 ${currentDomain} 隐藏书签按钮`
     : `在 ${currentDomain} 显示书签按钮`
 
-  if (menuId !== undefined && typeof GM_unregisterMenuCommand !== 'undefined')
-    GM_unregisterMenuCommand(menuId)
+  GM_registerMenuCommand(label, () => toggleCurrentDomain(), { id: TOGGLE_MENU_ID })
+}
 
-  menuId = GM_registerMenuCommand(label, () => toggleCurrentDomain())
+/** 导出完整设置为 JSON 文件下载 */
+function downloadSettings() {
+  const blob = new Blob([exportSettings()], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `any-bookmark-settings-${new Date().toISOString().slice(0, 10)}.json`
+  document.body.append(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+/** 粘贴 JSON 并导入设置，成功后刷新页面以应用 */
+function promptImportSettings() {
+  // 油猴菜单点击不会向页面传递用户激活，无法打开文件选择框，
+  // 改用 prompt 粘贴（对话框不依赖用户激活）
+  // eslint-disable-next-line no-alert
+  const json = prompt('粘贴导出的设置 JSON：')
+  if (!json)
+    return
+  try {
+    importSettings(json)
+    location.reload()
+  }
+  catch {
+    // eslint-disable-next-line no-alert
+    alert('导入失败：JSON 格式无效')
+  }
 }
 
 /** 在应用启动时调用一次，注册油猴菜单并保持其文案与开关状态同步 */
@@ -50,6 +85,12 @@ export function setupSettings() {
   initialized = true
 
   registerMenu()
-  // 状态变化后重新注册菜单项，更新「显示/隐藏」文案
+
+  if (typeof GM_registerMenuCommand === 'function') {
+    GM_registerMenuCommand('导出书签设置', () => downloadSettings(), { id: EXPORT_MENU_ID })
+    GM_registerMenuCommand('导入书签设置', () => promptImportSettings(), { id: IMPORT_MENU_ID })
+  }
+
+  // 状态变化后重新注册开关菜单项，更新「显示/隐藏」文案
   watch(currentDomainEnabled, registerMenu)
 }
