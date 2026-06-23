@@ -1,0 +1,11 @@
+/* :host 用于 Shadow DOM（生产环境），:root 用于普通文档（dev fallback） */
+:host,
+:root {
+  --c-accent: #c68345;
+  --c-panel: #151515; /* 面板主背景 */
+  --c-input: #1a1a1a; /* 输入框基础深色 */
+  --c-surface: #18181b;
+  --c-row: #16131c; /* 列表项基础深色 */
+  --c-border: #ffffff1a; /* 统一的不透明深色描边 */
+  --c-border-accent: #c6834580; /* 强调色描边 */
+}

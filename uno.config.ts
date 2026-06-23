@@ -1,4 +1,5 @@
 import transformerDirectives from '@unocss/transformer-directives'
+import transformerVariantGroup from '@unocss/transformer-variant-group'
 import {
   defineConfig,
   presetAttributify,
@@ -9,9 +10,19 @@ import {
 
 export default defineConfig({
   shortcuts: [
-    ['btn', 'px-4 py-1 rounded inline-block bg-teal-600 text-white cursor-pointer hover:bg-teal-700 disabled:cursor-default disabled:bg-gray-600 disabled:opacity-50'],
-    ['icon-btn', 'text-[0.9em] inline-block cursor-pointer select-none opacity-75 transition duration-200 ease-in-out hover:opacity-100 hover:text-teal-600'],
+    ['flex-center', 'items-center justify-center'],
   ],
+  theme: {
+    colors: {
+      'accent': 'var(--c-accent)',
+      'surface': 'var(--c-surface)',
+      'panel': 'var(--c-panel)',
+      'input': 'var(--c-input)',
+      'row': 'var(--c-row)',
+      'border': 'var(--c-border)',
+      'border-accent': 'var(--c-border-accent)',
+    },
+  },
   presets: [
     presetWind4(),
     presetAttributify(),
@@ -29,5 +40,6 @@ export default defineConfig({
   ],
   transformers: [
     transformerDirectives(),
+    transformerVariantGroup(),
   ],
 })

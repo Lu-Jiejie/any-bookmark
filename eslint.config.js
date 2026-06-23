@@ -4,6 +4,6 @@ export default antfu(
   {
     formatters: true,
     markdown: false,
-    unocss: false,
+    unocss: true,
   },
 )
