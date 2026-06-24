@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@11.8.0",
   "description": "为任何没有收藏功能的网站添加按域名分组的收藏夹面板。",
   "author": "Lu-Jiejie",
   "license": "MIT",
