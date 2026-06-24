@@ -1,2 +1,1 @@
-allowBuilds:
-  simple-git-hooks: true
+neverBuiltDependencies: []
