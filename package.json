@@ -3,6 +3,14 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "description": "为任何没有收藏功能的网站添加按域名分组的收藏夹面板。",
+  "author": "Lu-Jiejie",
+  "license": "MIT",
+  "homepage": "https://github.com/Lu-Jiejie/any-bookmark",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lu-Jiejie/any-bookmark.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",

@@ -11,8 +11,20 @@ export default defineConfig({
     monkey({
       entry: 'src/main.ts',
       userscript: {
+        name: {
+          '': 'Any Bookmark',
+          'zh-CN': '万能收藏夹',
+        },
+        description: {
+          '': 'Add a per-site bookmark panel to any website that lacks one.',
+          'zh-CN': '为任何没有收藏功能的网站添加按域名分组的收藏夹面板。',
+        },
+        author: 'Lu-Jiejie',
         icon: 'https://vitejs.dev/logo.svg',
         namespace: 'npm/vite-plugin-monkey',
+        // 自动更新指向 gh-pages 上的最新构建
+        downloadURL: 'https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js',
+        updateURL: 'https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js',
         match: ['*://*/*'],
         // 仅在顶层窗口运行，避免注入到 iframe（如 GitHub 的 viewscreen 子域）
         noframes: true,
