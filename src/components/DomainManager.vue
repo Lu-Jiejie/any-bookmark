@@ -30,7 +30,7 @@ watch(paged, (val) => {
 function editRegex(domain: string) {
   const current = getDomainRegex(domain) || ''
   // eslint-disable-next-line no-alert
-  const result = prompt(`为 ${domain} 设置正则提取模式：`, current)
+  const result = prompt(`为 ${domain} 设置正则表达式：`, current)
   if (result !== null) {
     saveDomainRegex(domain, result.trim())
   }
@@ -38,7 +38,7 @@ function editRegex(domain: string) {
 
 function handleRemove(domain: string) {
   // eslint-disable-next-line no-alert
-  if (!confirm(`确定要移除域名 "${domain}" 吗？\n该域名下的书签不会被删除，但将不再显示收藏按钮。`))
+  if (!confirm(`确定要移除域名 "${domain}" 吗？\n该域名下的收藏不会被删除，但将不再显示收藏按钮。`))
     return
   removeEnabledDomain(domain)
 }

@@ -151,7 +151,7 @@ async function handleSyncNow() {
     <!-- Not configured -->
     <template v-if="!isConfigured">
       <p text="white/60" text-xs mb-3>
-        配置 WebDAV 同步后，书签将在所有登录同一账号的设备间自动同步。
+        配置 WebDAV 同步后，收藏将在所有登录同一账号的设备间自动同步。
       </p>
 
       <div flex="~ col gap-2.5" mb-3>
@@ -209,7 +209,7 @@ async function handleSyncNow() {
       </div>
 
       <p text="xs white/30" mb-3>
-        每 5 分钟自动检查一次远程更新，添加或删除书签后 3 秒内自动推送。
+        每 5 分钟自动检查一次远程更新，添加或删除收藏后 3 秒内自动推送。
       </p>
 
       <p v-if="localError" text="red-400 text-xs" mb-2>

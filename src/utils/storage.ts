@@ -121,7 +121,7 @@ interface SettingsExport {
 
 const SETTINGS_VERSION = 2
 
-/** 导出全部数据（书签 + 域名 + 正则 + 时间戳）为格式化 JSON 字符串 */
+/** 导出全部数据（收藏 + 域名 + 正则 + 时间戳）为格式化 JSON 字符串 */
 export function exportAllData(): string {
   const data: SettingsExport = {
     version: SETTINGS_VERSION,

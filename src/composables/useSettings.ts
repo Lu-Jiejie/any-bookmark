@@ -105,8 +105,8 @@ export function setupSettings() {
   registerMenu()
 
   if (typeof GM_registerMenuCommand === 'function') {
-    GM_registerMenuCommand('导出书签设置', () => downloadSettings(), { id: EXPORT_MENU_ID })
-    GM_registerMenuCommand('导入书签设置', () => promptImportSettings(), { id: IMPORT_MENU_ID })
+    GM_registerMenuCommand('导出收藏设置', () => downloadSettings(), { id: EXPORT_MENU_ID })
+    GM_registerMenuCommand('导入收藏设置', () => promptImportSettings(), { id: IMPORT_MENU_ID })
   }
 
   // 状态变化后重新注册开关菜单项，更新「显示/隐藏」文案

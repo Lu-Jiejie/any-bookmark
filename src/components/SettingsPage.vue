@@ -102,7 +102,7 @@ async function handleImportFile(e: Event) {
     <!-- Data tab -->
     <div v-if="activeTab === 'data'" flex="~ col">
       <p text="white/60" text-xs mb-3>
-        导出全部数据（书签、域名、正则模式、时间戳），或从之前导出的文件中恢复。
+        导出全部数据（收藏、域名、正则模式、时间戳），或从之前导出的文件中恢复。
       </p>
       <div flex="~ gap-2">
         <BaseButton variant="primary" class="flex-1" @click="handleExport()">

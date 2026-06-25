@@ -40,12 +40,13 @@ export function useBookmarks() {
     }
   }, { deep: true })
 
-  function add(name: string) {
+  function add(name: string, url: string = location.href) {
     const trimmed = name.trim()
-    if (!trimmed)
+    const trimmedUrl = url.trim()
+    if (!trimmed || !trimmedUrl)
       return
 
-    const entry: Bookmark = { name: trimmed, url: location.href }
+    const entry: Bookmark = { name: trimmed, url: trimmedUrl }
     const data = { ...allBookmarks.value }
     if (!data[hostname.value]) {
       data[hostname.value] = []
@@ -65,17 +66,18 @@ export function useBookmarks() {
     touchDomain(hostname.value)
   }
 
-  /** 编辑书签名称 */
-  function updateName(index: number, newName: string) {
-    const trimmed = newName.trim()
-    if (!trimmed)
+  /** 编辑书签名称与地址 */
+  function updateBookmark(index: number, newName: string, newUrl: string) {
+    const trimmedName = newName.trim()
+    const trimmedUrl = newUrl.trim()
+    if (!trimmedName || !trimmedUrl)
       return
     const data = { ...allBookmarks.value }
     data[hostname.value] = [...data[hostname.value]]
-    data[hostname.value][index] = { ...data[hostname.value][index], name: trimmed }
+    data[hostname.value][index] = { ...data[hostname.value][index], name: trimmedName, url: trimmedUrl }
     allBookmarks.value = data
     touchDomain(hostname.value)
   }
 
-  return { allBookmarks, hostname, currentBookmarks, add, remove, updateName }
+  return { allBookmarks, hostname, currentBookmarks, add, remove, updateBookmark }
 }
