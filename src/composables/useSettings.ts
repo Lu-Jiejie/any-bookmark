@@ -18,6 +18,18 @@ export const currentDomainEnabled = computed(
   () => enabledDomains.value.includes(currentDomain),
 )
 
+/** 所有已启用的域名（响应式，供设置面板使用） */
+export { enabledDomains }
+
+/** 从已启用列表中移除一个域名并持久化 */
+export function removeEnabledDomain(domain: string): void {
+  enabledDomains.value = enabledDomains.value.filter(d => d !== domain)
+  saveEnabledDomains(enabledDomains.value)
+  const timestamps = loadLastModified()
+  timestamps.__enabled__ = Date.now()
+  saveLastModified(timestamps)
+}
+
 function toggleCurrentDomain() {
   const next = new Set(enabledDomains.value)
   if (next.has(currentDomain))

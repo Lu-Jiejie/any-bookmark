@@ -4,7 +4,9 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useBookmarks } from '../composables/useBookmarks'
 import { usePagination } from '../composables/usePagination'
 import Pagination from './Pagination.vue'
-import SyncSettings from './SyncSettings.vue'
+import SettingsPage from './SettingsPage.vue'
+import BaseButton from './ui/BaseButton.vue'
+import BaseInput from './ui/BaseInput.vue'
 
 const props = defineProps<{
   open: boolean
@@ -100,18 +102,12 @@ function handleRemove(index: number) {
 
           <div flex gap-3 items-center>
             <span text="#a6926d" text-xs font-mono>{{ hostname }}</span>
-            <button
-              text-white p-0.5 border-none bg-transparent op-40 cursor-pointer transition-colors duration-200 hover:op-90
-              @click="currentView = 'settings'"
-            >
+            <BaseButton variant="ghost" title="设置" @click="currentView = 'settings'">
               <div i-mdi-cog text-lg />
-            </button>
-            <button
-              text-white p-0.5 border-none bg-transparent op-40 cursor-pointer transition-colors duration-200 hover:op-90
-              @click="emit('close')"
-            >
+            </BaseButton>
+            <BaseButton variant="ghost" @click="emit('close')">
               <div i-mdi-close text-lg />
-            </button>
+            </BaseButton>
           </div>
         </div>
 
@@ -120,17 +116,13 @@ function handleRemove(index: number) {
           <div mb-3 h-px to-transparent bg-gradient-to-r from="[var(--border-dark)]" via="[var(--c-accent)]" />
 
           <div flex="~  gap-2" mb-3>
-            <input
+            <BaseInput
               ref="inputRef"
               v-model="newName"
-              type="text"
               placeholder="为当前页面命名…"
-              border="1 solid border focus:border-accent"
-              p="x-3 y-2"
-              text="sm white/90! placeholder-white/40!"
-              outline-none rounded-lg flex-1 transition-200 important-bg-input
+              class="flex-1"
               @keydown.enter="handleAdd()"
-            >
+            />
 
             <button
               p="x-3 y-2"
@@ -190,7 +182,7 @@ function handleRemove(index: number) {
         </template>
 
         <!-- Settings view -->
-        <SyncSettings
+        <SettingsPage
           v-if="currentView === 'settings'"
           @back="currentView = 'bookmarks'"
         />

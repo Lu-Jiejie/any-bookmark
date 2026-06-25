@@ -3,6 +3,13 @@ import { computed, ref } from 'vue'
 import { useSync } from '../composables/useSync'
 import { exportSettings, importSettings } from '../utils/storage'
 import { getSyncConfig } from '../utils/sync'
+import BaseButton from './ui/BaseButton.vue'
+import BaseInput from './ui/BaseInput.vue'
+
+defineProps<{
+  /** 嵌入设置页时隐藏自带标题栏 */
+  embedded?: boolean
+}>()
 
 const emit = defineEmits<{
   back: []
@@ -26,12 +33,10 @@ const showPassword = ref(false)
 const localError = ref<string | null>(null)
 const connecting = ref(false)
 
-// "not configured" mode: all fields required
 const canConnect = computed(() =>
   url.value.trim() && username.value.trim() && password.value.trim(),
 )
 
-// "configured" mode: url + username required, password = keep existing if empty
 const canUpdate = computed(() =>
   url.value.trim() && username.value.trim(),
 )
@@ -66,7 +71,6 @@ function formatTime(date: Date | null): string {
   })
 }
 
-/** Returns the effective config: falls back to existing stored password if input is empty */
 function effectiveConfig() {
   const cfg = getSyncConfig()
   return {
@@ -139,14 +143,14 @@ const importMessage = ref<string | null>(null)
 
 function handleExport() {
   const blob = new Blob([exportSettings()], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
+  const u = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = url
+  a.href = u
   a.download = `any-bookmark-${new Date().toISOString().slice(0, 10)}.json`
   document.body.append(a)
   a.click()
   a.remove()
-  URL.revokeObjectURL(url)
+  URL.revokeObjectURL(u)
 }
 
 function handleImportClick() {
@@ -164,14 +168,12 @@ async function handleImportFile(e: Event) {
     const text = await file.text()
     importSettings(text)
     importMessage.value = '导入成功，即将刷新页面…'
-    // 刷新以使 useBookmarks 等重新加载数据
     setTimeout(() => location.reload(), 800)
   }
   catch {
     importMessage.value = '导入失败：文件格式无效'
   }
   finally {
-    // 重置 input 以允许重复导入同一文件
     input.value = ''
   }
 }
@@ -179,20 +181,19 @@ async function handleImportFile(e: Event) {
 
 <template>
   <div flex="~ col">
-    <div flex="~ items-center justify-between" mb-3>
-      <div flex gap-2.5 items-center>
-        <div i-mdi-cog text-lg text-accent />
-        <span text-base text-white tracking-wider font-bold font-serif>同步设置</span>
+    <template v-if="!embedded">
+      <div flex="~ items-center justify-between" mb-3>
+        <div flex gap-2.5 items-center>
+          <div i-mdi-cog text-lg text-accent />
+          <span text-base text-white tracking-wider font-bold font-serif>同步设置</span>
+        </div>
+        <BaseButton variant="ghost" @click="emit('back')">
+          <div i-mdi-close text-lg />
+        </BaseButton>
       </div>
-      <button
-        text-white p-0.5 border-none bg-transparent op-40 cursor-pointer transition-colors duration-200 hover:op-90
-        @click="emit('back')"
-      >
-        <div i-mdi-close text-lg />
-      </button>
-    </div>
 
-    <div mb-3 h-px to-transparent bg-gradient-to-r from="[var(--border-dark)]" via="[var(--c-accent)]" />
+      <div mb-3 h-px to-transparent bg-gradient-to-r from="[var(--border-dark)]" via="[var(--c-accent)]" />
+    </template>
 
     <!-- Not configured -->
     <template v-if="!isConfigured">
@@ -201,35 +202,14 @@ async function handleImportFile(e: Event) {
       </p>
 
       <div flex="~ col gap-2.5" mb-3>
-        <input
-          v-model="url"
-          type="url"
-          placeholder="WebDAV 目录地址，如 https://nas.lan/dav/any-bookmark"
-          border="1 solid border focus:border-accent"
-          p="x-3 y-2"
-          text="sm white/90! placeholder-white/30!"
-          outline-none rounded-lg transition-200 important-bg-input
-        >
-        <input
-          v-model="username"
-          type="text"
-          placeholder="用户名"
-          border="1 solid border focus:border-accent"
-          p="x-3 y-2"
-          text="sm white/90! placeholder-white/30!"
-          outline-none rounded-lg transition-200 important-bg-input
-        >
+        <BaseInput v-model="url" type="url" placeholder="WebDAV 目录地址，如 https://nas.lan/dav/any-bookmark" />
+        <BaseInput v-model="username" placeholder="用户名" />
         <div relative>
-          <input
+          <BaseInput
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="密码"
-            border="1 solid border focus:border-accent"
-            p="x-3 y-2"
-
-            text="sm white/90! placeholder-white/30!"
-            outline-none rounded-lg w-full transition-200 important-bg-input
-          >
+          />
           <button
             class="text-sm text-white/30 p-0.5 border-none bg-transparent cursor-pointer transition-200 right-2.5 top-1/2 absolute hover:text-white/60 -translate-y-1/2"
             @click="showPassword = !showPassword"
@@ -239,18 +219,14 @@ async function handleImportFile(e: Event) {
         </div>
       </div>
 
-      <button
-        class="text-sm px-3 py-2 border border-accent rounded-lg border-solid flex gap-1 cursor-pointer transition-200 justify-center"
-        :class="{
-          'border-border! cursor-not-allowed text-white/40! bg-input': !canConnect || connecting,
-          'bg-accent/10! text-accent/90 hover:bg-accent! hover:text-white/90': canConnect && !connecting,
-        }"
+      <BaseButton
+        variant="primary"
         :disabled="!canConnect || connecting"
         @click="handleConnect()"
       >
         <div v-if="connecting" i-mdi-loading text-sm animate-spin />
         <span>{{ connecting ? '连接中…' : '连接并同步' }}</span>
-      </button>
+      </BaseButton>
 
       <p v-if="localError" text="red-400 text-xs" mt-2>
         {{ localError }}
@@ -279,56 +255,31 @@ async function handleImportFile(e: Event) {
         </div>
       </div>
 
-      <div v-if="localError" text="red-400 text-xs" mb-2>
+      <p v-if="localError" text="red-400 text-xs" mb-2>
         {{ localError }}
-      </div>
-      <div v-if="error && !localError" text="red-400 text-xs" mb-2>
+      </p>
+      <p v-if="error && !localError" text="red-400 text-xs" mb-2>
         {{ error }}
-      </div>
+      </p>
 
-      <button
-        class="text-sm text-accent/90 px-3 py-2 border border-accent rounded-lg border-solid flex gap-1 cursor-pointer transition-200 justify-center hover:text-white/90 bg-accent/10! hover:bg-accent!"
-        :disabled="connecting"
-        @click="handleSyncNow()"
-      >
+      <BaseButton variant="primary" :disabled="connecting" @click="handleSyncNow()">
         <div v-if="connecting" i-mdi-loading text-sm animate-spin />
         <span>{{ connecting ? '同步中…' : '立即同步' }}</span>
-      </button>
+      </BaseButton>
 
       <div text="white/40" text-xs tracking-wider font-bold mb-1 mt-4 uppercase>
         服务器配置
       </div>
 
       <div flex="~ col gap-2.5" mb-3 mt-2>
-        <input
-          v-model="url"
-          type="url"
-          placeholder="WebDAV 目录地址"
-          border="1 solid border focus:border-accent"
-          p="x-3 y-2"
-          text="sm white/90! placeholder-white/30!"
-          outline-none rounded-lg transition-200 important-bg-input
-        >
-        <input
-          v-model="username"
-          type="text"
-          placeholder="用户名"
-          border="1 solid border focus:border-accent"
-          p="x-3 y-2"
-          text="sm white/90! placeholder-white/30!"
-          outline-none rounded-lg transition-200 important-bg-input
-        >
+        <BaseInput v-model="url" type="url" placeholder="WebDAV 目录地址" />
+        <BaseInput v-model="username" placeholder="用户名" />
         <div relative>
-          <input
+          <BaseInput
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
             placeholder="密码（留空则不修改）"
-            border="1 solid border focus:border-accent"
-            p="x-3 y-2"
-
-            text="sm white/90! placeholder-white/30!"
-            outline-none rounded-lg w-full transition-200 important-bg-input
-          >
+          />
           <button
             class="text-sm text-white/30 p-0.5 border-none bg-transparent cursor-pointer transition-200 right-2.5 top-1/2 absolute hover:text-white/60 -translate-y-1/2"
             @click="showPassword = !showPassword"
@@ -339,22 +290,12 @@ async function handleImportFile(e: Event) {
       </div>
 
       <div flex="~ gap-2">
-        <button
-          p="x-3 y-2"
-          border="1 solid border rounded-lg"
-
-          text="white/70" text-sm bg-input flex-1 cursor-pointer transition-200 hover:text-white
-          :disabled="!canUpdate || connecting"
-          @click="handleUpdate()"
-        >
+        <BaseButton variant="default" class="flex-1" :disabled="!canUpdate || connecting" @click="handleUpdate()">
           更新配置
-        </button>
-        <button
-          class="text-sm text-red-300 px-3 py-2 border border-red-400/50 rounded-lg border-solid bg-red-900/10 cursor-pointer transition-200 hover:bg-red-900/30"
-          @click="handleDisconnect()"
-        >
+        </BaseButton>
+        <BaseButton variant="danger" @click="handleDisconnect()">
           断开同步
-        </button>
+        </BaseButton>
       </div>
 
       <div text="white/40" text-xs tracking-wider font-bold mb-1 mt-4 uppercase>
@@ -362,22 +303,12 @@ async function handleImportFile(e: Event) {
       </div>
 
       <div flex="~ gap-2" mt-2>
-        <button
-          p="x-3 y-2"
-          border="1 solid border rounded-lg"
-          text="white/70" text-sm bg-input flex-1 cursor-pointer transition-200 hover:text-white
-          @click="handleExport()"
-        >
+        <BaseButton variant="default" class="flex-1" @click="handleExport()">
           导出设置
-        </button>
-        <button
-          p="x-3 y-2"
-          border="1 solid border rounded-lg"
-          text="white/70" text-sm bg-input flex-1 cursor-pointer transition-200 hover:text-white
-          @click="handleImportClick()"
-        >
+        </BaseButton>
+        <BaseButton variant="default" class="flex-1" @click="handleImportClick()">
           导入设置
-        </button>
+        </BaseButton>
         <input
           ref="importInput"
           type="file"
