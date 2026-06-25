@@ -13,7 +13,7 @@ const currentDomain = location.hostname
 
 const enabledDomains = ref<string[]>(loadEnabledDomains())
 
-/** 当前域名是否应展示书签按钮，默认禁用 */
+/** 当前域名是否应展示收藏按钮，默认禁用 */
 export const currentDomainEnabled = computed(
   () => enabledDomains.value.includes(currentDomain),
 )
@@ -59,8 +59,8 @@ function registerMenu() {
 
   const enabled = enabledDomains.value.includes(currentDomain)
   const label = enabled
-    ? `在 ${currentDomain} 隐藏书签按钮`
-    : `在 ${currentDomain} 显示书签按钮`
+    ? `在 ${currentDomain} 隐藏收藏按钮`
+    : `在 ${currentDomain} 显示收藏按钮`
 
   GM_registerMenuCommand(label, () => toggleCurrentDomain(), { id: TOGGLE_MENU_ID })
 }

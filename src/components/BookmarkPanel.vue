@@ -289,7 +289,7 @@ function applyRegex() {
               <input
                 :value="domainRegex || ''"
                 type="text"
-                placeholder="未设置，如 ^(.+?)\s*\|\s*Danbooru$"
+                placeholder="未设置，如 ^(.+?)\s*\|\s*Example.com$"
                 border="1 solid border focus:border-accent"
                 p="x-2 y-2"
                 class="flex-1 important-bg-input"
