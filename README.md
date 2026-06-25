@@ -6,7 +6,7 @@
 
 起因：在 ~~yande.re~~ 上搜图的时候想存几个 tag 组合，发现这网站没有收藏功能。使用浏览器书签又太重，而且不好管理与打开，我要做的只是“在页面中管理页面相关的收藏”。
 
-## 怎么装
+## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)
 2. 在[GitHub](https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js)或GreasyFork安装此脚本。
@@ -15,9 +15,11 @@
 
 在拓展栏点击 TamperMonkey 图标，并选择该脚本，并点击 `在 XXX 显示收藏按钮` ，为该域名启用收藏功能。
 
+![example4](./assets/example4.png)
+
 点击右下角悬浮按钮打开面板。
 
-![eample2](./assets/example2.png)
+![example2](./assets/example2.png)
 
 点击添加以添加收藏。
 

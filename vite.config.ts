@@ -18,8 +18,9 @@ export default defineConfig({
           '': '为每个网站提供独立的快速收藏夹功能，按照域名各自管理，适用于各种图站、论坛等。',
         },
         author: 'Lu-Jiejie',
-        icon: 'https://raw.githubusercontent.com/Lu-Jiejie/any-bookmark/main/assets/icon.svg',
-        namespace: 'npm/vite-plugin-monkey',
+        icon: 'https://cdn.jsdmirror.com/gh/Lu-Jiejie/any-bookmark@main/assets/ico.svg',
+        namespace: 'https://github.com/Lu-Jiejie/any-bookmark',
+        homepage: 'https://github.com/Lu-Jiejie/any-bookmark',
         // 自动更新指向 gh-pages 上的最新构建
         downloadURL: 'https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js',
         updateURL: 'https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js',
