@@ -37,7 +37,7 @@
 
 支持通过 WebDAV 同步收藏数据。
 
-![example3](./assets/example3.com.png)
+![example3](./assets/example3.png)
 
 自动同步：每 5 分钟自动检查远端更新，本地增删书签 3 秒内推送到远端。
 
