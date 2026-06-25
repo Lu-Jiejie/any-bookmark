@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { usePagination } from '../composables/usePagination'
 import { enabledDomains, removeEnabledDomain } from '../composables/useSettings'
+import { getDomainRegex, saveDomainRegex } from '../utils/storage'
 import Pagination from './Pagination.vue'
 import BaseButton from './ui/BaseButton.vue'
 
@@ -24,6 +25,26 @@ watch(paged, (val) => {
   if (val.length === 0 && current.value > 1)
     current.value--
 })
+
+// Regex editing
+const editingRegex = ref<string | null>(null)
+const regexInput = ref('')
+
+function startEditRegex(domain: string) {
+  editingRegex.value = domain
+  regexInput.value = getDomainRegex(domain) || ''
+}
+
+function saveRegex() {
+  if (editingRegex.value) {
+    saveDomainRegex(editingRegex.value, regexInput.value.trim())
+    editingRegex.value = null
+  }
+}
+
+function cancelEditRegex() {
+  editingRegex.value = null
+}
 
 function handleRemove(domain: string) {
   // eslint-disable-next-line no-alert
@@ -62,32 +83,70 @@ function handleRemove(domain: string) {
 
     <template v-else>
       <div flex="~ col gap-1" p-1 border="1 solid border rounded-lg">
-        <div
-          v-for="domain in paged"
-          :key="domain"
-          border="1 solid transparent hover:border-accent"
-          flex="~ items-center" px-3 rounded-lg bg-input transition-250
-          class="group"
-        >
-          <a
-            :href="`https://${domain}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            :title="domain"
-            un-text="sm white/90!" font-sans py-2.5 op-80 no-underline flex flex-1 min-w-0 items-center
-            class="transition-all duration-200 group-hover:op-100 group-hover:text-[var(--c-accent)]!"
+        <template v-for="domain in paged" :key="domain">
+          <div
+            border="1 solid transparent hover:border-accent"
+            flex="~ items-center" px-3 rounded-lg bg-input transition-250
+            class="group"
           >
-            <span class="truncate">{{ domain }}</span>
-          </a>
+            <a
+              :href="`https://${domain}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              :title="domain"
+              un-text="sm white/90!" font-sans py-2.5 op-80 no-underline flex flex-1 min-w-0 items-center
+              class="transition-all duration-200 group-hover:op-100 group-hover:text-[var(--c-accent)]!"
+            >
+              <span class="truncate">{{ domain }}</span>
+            </a>
 
-          <button
-            text-white ml-2 p-1 border-none bg-transparent op-30 flex shrink-0 cursor-pointer items-center
-            class="transition-all duration-200 relative z-2 hover:text-red-400! hover:op-100!"
-            @click="handleRemove(domain)"
+            <button
+              v-if="editingRegex !== domain"
+              text-white ml-1 p-1 border-none bg-transparent
+              op-0 flex shrink-0 cursor-pointer items-center
+              class="transition-all duration-200 group-hover:op-40 hover:text-accent! hover:op-100!"
+              :title="getDomainRegex(domain) ? `正则: ${getDomainRegex(domain)}` : '设置正则'"
+              @click="startEditRegex(domain)"
+            >
+              <div i-mdi-regex text-xs />
+            </button>
+
+            <button
+              text-white ml-2 p-1 border-none bg-transparent op-30 flex shrink-0 cursor-pointer items-center
+              class="transition-all duration-200 relative z-2 hover:text-red-400! hover:op-100!"
+              @click="handleRemove(domain)"
+            >
+              <div i-mdi-delete-outline text-sm />
+            </button>
+          </div>
+
+          <!-- Inline regex editor -->
+          <div
+            v-if="editingRegex === domain"
+            flex="~ items-center gap-2" border="1 dashed border-accent/30"
+            mb-1 px-3 py-2 rounded-lg class="bg-accent/3"
           >
-            <div i-mdi-delete-outline text-sm />
-          </button>
-        </div>
+            <div i-mdi-regex text="sm accent/60" flex-shrink-0 />
+            <input
+              v-model="regexInput"
+              type="text"
+              placeholder="正则替换模式，如 ^.*\s-\s"
+              border="1 solid border focus:border-accent"
+              p="x-2 y-1"
+              class="flex-1 important-bg-input"
+              text="xs white/90! placeholder-white/25!"
+              outline-none rounded transition-200
+              @keydown.enter="saveRegex()"
+              @keydown.escape="cancelEditRegex()"
+            >
+            <BaseButton variant="ghost" @click="saveRegex()">
+              <div i-mdi-check text-sm text-green-400 />
+            </BaseButton>
+            <BaseButton variant="ghost" @click="cancelEditRegex()">
+              <div i-mdi-close text-sm text-red-400 />
+            </BaseButton>
+          </div>
+        </template>
 
         <div
           v-for="n in emptyRowsCount"

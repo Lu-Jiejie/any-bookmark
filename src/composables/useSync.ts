@@ -110,7 +110,7 @@ export function useSync() {
       }
       lastSyncTime.value = new Date()
       setStatus('idle')
-      startAutoSync(60000)
+      startAutoSync(300000)
     }
     catch (e) {
       setStatus('error')
@@ -119,15 +119,31 @@ export function useSync() {
     }
   }
 
+  const autoSyncEnabled = ref(false)
+
   function disconnectSync(): void {
     clearSyncConfig()
     isConfigured.value = false
+    autoSyncEnabled.value = false
     stopAutoSync()
     setStatus('not_configured')
     lastSyncTime.value = null
   }
 
-  function startAutoSync(intervalMs: number = 60000): void {
+  function toggleAutoSync(): void {
+    if (autoSyncEnabled.value) {
+      stopAutoSync()
+      autoSyncEnabled.value = false
+    }
+    else {
+      startAutoSync(300000)
+      autoSyncEnabled.value = true
+    }
+  }
+
+  function startAutoSync(intervalMs: number = 300000): void {
+    stopAutoSync()
+    autoSyncEnabled.value = true
     stopAutoSync()
     pollTimer = setInterval(async () => {
       if (status.value === 'syncing')
@@ -157,6 +173,8 @@ export function useSync() {
     sync: doSync,
     setupSync,
     disconnectSync,
+    toggleAutoSync,
+    autoSyncEnabled: readonly(autoSyncEnabled),
     startAutoSync,
     stopAutoSync,
   }

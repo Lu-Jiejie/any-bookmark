@@ -19,7 +19,7 @@ onMounted(async () => {
     await pullAndMerge()
   }
   catch { /* 启动时拉取失败静默处理 */ }
-  startAutoSync(60000)
+  startAutoSync(300000)
 })
 
 // 本地变更后延迟 3s 推送（不阻塞操作）

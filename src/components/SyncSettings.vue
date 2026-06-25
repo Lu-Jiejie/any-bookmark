@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useSync } from '../composables/useSync'
-import { exportSettings, importSettings } from '../utils/storage'
+// import/export moved to SettingsPage Data tab
 import { getSyncConfig } from '../utils/sync'
 import BaseButton from './ui/BaseButton.vue'
 import BaseInput from './ui/BaseInput.vue'
@@ -21,13 +21,14 @@ const {
   error,
   isConfigured,
   setupSync,
-  disconnectSync,
+  toggleAutoSync,
+  autoSyncEnabled,
 } = useSync()
 
 const existing = getSyncConfig()
 const url = ref(existing?.url ?? '')
 const username = ref(existing?.username ?? '')
-const password = ref('')
+const password = ref(existing?.password ?? '')
 const showPassword = ref(false)
 
 const localError = ref<string | null>(null)
@@ -72,11 +73,10 @@ function formatTime(date: Date | null): string {
 }
 
 function effectiveConfig() {
-  const cfg = getSyncConfig()
   return {
     url: url.value.trim(),
     username: username.value.trim(),
-    password: password.value || cfg?.password || '',
+    password: password.value,
   }
 }
 
@@ -128,53 +128,6 @@ async function handleSyncNow() {
   }
   finally {
     connecting.value = false
-  }
-}
-
-function handleDisconnect() {
-  disconnectSync()
-  url.value = ''
-  username.value = ''
-  password.value = ''
-}
-
-const importInput = ref<HTMLInputElement>()
-const importMessage = ref<string | null>(null)
-
-function handleExport() {
-  const blob = new Blob([exportSettings()], { type: 'application/json' })
-  const u = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = u
-  a.download = `any-bookmark-${new Date().toISOString().slice(0, 10)}.json`
-  document.body.append(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(u)
-}
-
-function handleImportClick() {
-  importInput.value?.click()
-}
-
-async function handleImportFile(e: Event) {
-  const input = e.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file)
-    return
-
-  importMessage.value = null
-  try {
-    const text = await file.text()
-    importSettings(text)
-    importMessage.value = '导入成功，即将刷新页面…'
-    setTimeout(() => location.reload(), 800)
-  }
-  catch {
-    importMessage.value = '导入失败：文件格式无效'
-  }
-  finally {
-    input.value = ''
   }
 }
 </script>
@@ -255,6 +208,10 @@ async function handleImportFile(e: Event) {
         </div>
       </div>
 
+      <p text="xs white/30" mb-3>
+        每 5 分钟自动检查一次远程更新，添加或删除书签后 3 秒内自动推送。
+      </p>
+
       <p v-if="localError" text="red-400 text-xs" mb-2>
         {{ localError }}
       </p>
@@ -278,7 +235,7 @@ async function handleImportFile(e: Event) {
           <BaseInput
             v-model="password"
             :type="showPassword ? 'text' : 'password'"
-            placeholder="密码（留空则不修改）"
+            placeholder="密码"
           />
           <button
             class="text-sm text-white/30 p-0.5 border-none bg-transparent cursor-pointer transition-200 right-2.5 top-1/2 absolute hover:text-white/60 -translate-y-1/2"
@@ -293,34 +250,13 @@ async function handleImportFile(e: Event) {
         <BaseButton variant="default" class="flex-1" :disabled="!canUpdate || connecting" @click="handleUpdate()">
           更新配置
         </BaseButton>
-        <BaseButton variant="danger" @click="handleDisconnect()">
-          断开同步
-        </BaseButton>
-      </div>
-
-      <div text="white/40" text-xs tracking-wider font-bold mb-1 mt-4 uppercase>
-        数据管理
-      </div>
-
-      <div flex="~ gap-2" mt-2>
-        <BaseButton variant="default" class="flex-1" @click="handleExport()">
-          导出设置
-        </BaseButton>
-        <BaseButton variant="default" class="flex-1" @click="handleImportClick()">
-          导入设置
-        </BaseButton>
-        <input
-          ref="importInput"
-          type="file"
-          accept=".json"
-          hidden
-          @change="handleImportFile"
+        <BaseButton
+          :variant="autoSyncEnabled ? 'default' : 'primary'"
+          @click="toggleAutoSync()"
         >
+          {{ autoSyncEnabled ? '关闭自动同步' : '开启自动同步' }}
+        </BaseButton>
       </div>
-
-      <p v-if="importMessage" text="green-400 text-xs" mt-2>
-        {{ importMessage }}
-      </p>
     </template>
   </div>
 </template>

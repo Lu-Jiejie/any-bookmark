@@ -70,25 +70,55 @@ export function touchDomain(domain: string): void {
   saveLastModified(data)
 }
 
+const DOMAIN_REGEX_KEY = 'any-bookmark-domain-regex'
+
+export function loadDomainRegexes(): Record<string, string> {
+  try {
+    const raw = gmGetValue(DOMAIN_REGEX_KEY, '{}')
+    return JSON.parse(raw)
+  }
+  catch {
+    return {}
+  }
+}
+
+export function saveDomainRegex(domain: string, pattern: string): void {
+  const data = loadDomainRegexes()
+  if (pattern)
+    data[domain] = pattern
+  else
+    delete data[domain]
+  gmSetValue(DOMAIN_REGEX_KEY, JSON.stringify(data))
+}
+
+export function getDomainRegex(domain: string): string | null {
+  return loadDomainRegexes()[domain] || null
+}
+
 interface SettingsExport {
   version: number
   bookmarks: Record<string, Bookmark[]>
   enabledDomains: string[]
   lastModified: Record<string, number>
+  domainRegexes: Record<string, string>
 }
 
 const SETTINGS_VERSION = 2
 
-/** 导出完整设置（书签 + 启用域名 + 时间戳）为格式化 JSON 字符串 */
-export function exportSettings(): string {
+/** 导出全部数据（书签 + 域名 + 正则 + 时间戳）为格式化 JSON 字符串 */
+export function exportAllData(): string {
   const data: SettingsExport = {
     version: SETTINGS_VERSION,
     bookmarks: loadBookmarks(),
     enabledDomains: loadEnabledDomains(),
     lastModified: loadLastModified(),
+    domainRegexes: loadDomainRegexes(),
   }
   return JSON.stringify(data, null, 2)
 }
+
+// 保持旧函数名兼容油猴菜单
+export { exportAllData as exportSettings }
 
 /** 从 JSON 字符串导入设置，格式非法时抛出错误 */
 export function importSettings(json: string): void {
@@ -104,4 +134,11 @@ export function importSettings(json: string): void {
 
   if (data.lastModified && typeof data.lastModified === 'object')
     saveLastModified(data.lastModified)
+
+  if (data.domainRegexes && typeof data.domainRegexes === 'object') {
+    Object.entries(data.domainRegexes).forEach(([domain, pattern]) => {
+      if (typeof pattern === 'string' && pattern)
+        saveDomainRegex(domain, pattern)
+    })
+  }
 }

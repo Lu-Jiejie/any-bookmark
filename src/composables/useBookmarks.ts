@@ -65,5 +65,17 @@ export function useBookmarks() {
     touchDomain(hostname.value)
   }
 
-  return { allBookmarks, hostname, currentBookmarks, add, remove }
+  /** 编辑书签名称 */
+  function updateName(index: number, newName: string) {
+    const trimmed = newName.trim()
+    if (!trimmed)
+      return
+    const data = { ...allBookmarks.value }
+    data[hostname.value] = [...data[hostname.value]]
+    data[hostname.value][index] = { ...data[hostname.value][index], name: trimmed }
+    allBookmarks.value = data
+    touchDomain(hostname.value)
+  }
+
+  return { allBookmarks, hostname, currentBookmarks, add, remove, updateName }
 }

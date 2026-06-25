@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDraggable, useWindowSize } from '@vueuse/core'
+import { useDraggable, useStorage, useWindowSize } from '@vueuse/core'
 import { ref, useTemplateRef, watch } from 'vue'
 
 const emit = defineEmits<{
@@ -44,10 +44,17 @@ function handleClick() {
   emit('toggle')
 }
 
+// 持久化拖拽位置到 localStorage（仅本设备，不同步）
+const savedX = useStorage<number | null>('any-bookmark-btn-x', null)
+const savedY = useStorage<number | null>('any-bookmark-btn-y', null)
+
+const defaultX = () => Math.max(0, width.value - btnSize - margin)
+const defaultY = () => Math.max(0, height.value - btnSize - margin)
+
 const { x, y, style } = useDraggable(btnRef, {
   initialValue: () => ({
-    x: Math.max(0, width.value - btnSize - margin),
-    y: Math.max(0, height.value - btnSize - margin),
+    x: savedX.value ?? defaultX(),
+    y: savedY.value ?? defaultY(),
   }),
 
   preventDefault: true,
@@ -63,6 +70,12 @@ const { x, y, style } = useDraggable(btnRef, {
       Math.min(y.value, height.value - btnSize - margin),
     )
   },
+})
+
+// 拖拽停止后保存位置
+watch([x, y], () => {
+  savedX.value = x.value
+  savedY.value = y.value
 })
 
 watch([width, height], () => {
