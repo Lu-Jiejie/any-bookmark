@@ -47,20 +47,45 @@ export function saveEnabledDomains(domains: string[]): void {
   gmSetValue(ENABLED_DOMAINS_KEY, JSON.stringify(domains))
 }
 
+const LAST_MODIFIED_KEY = 'any-bookmark-last-modified'
+
+export function loadLastModified(): Record<string, number> {
+  try {
+    const raw = gmGetValue(LAST_MODIFIED_KEY, '{}')
+    return JSON.parse(raw)
+  }
+  catch {
+    return {}
+  }
+}
+
+export function saveLastModified(data: Record<string, number>): void {
+  gmSetValue(LAST_MODIFIED_KEY, JSON.stringify(data))
+}
+
+/** 记录指定域名的最后修改时间戳，用于多设备冲突解决 */
+export function touchDomain(domain: string): void {
+  const data = loadLastModified()
+  data[domain] = Date.now()
+  saveLastModified(data)
+}
+
 interface SettingsExport {
   version: number
   bookmarks: Record<string, Bookmark[]>
   enabledDomains: string[]
+  lastModified: Record<string, number>
 }
 
-const SETTINGS_VERSION = 1
+const SETTINGS_VERSION = 2
 
-/** 导出完整设置（书签 + 启用域名）为格式化 JSON 字符串 */
+/** 导出完整设置（书签 + 启用域名 + 时间戳）为格式化 JSON 字符串 */
 export function exportSettings(): string {
   const data: SettingsExport = {
     version: SETTINGS_VERSION,
     bookmarks: loadBookmarks(),
     enabledDomains: loadEnabledDomains(),
+    lastModified: loadLastModified(),
   }
   return JSON.stringify(data, null, 2)
 }
@@ -76,4 +101,7 @@ export function importSettings(json: string): void {
 
   if (Array.isArray(data.enabledDomains))
     saveEnabledDomains(data.enabledDomains)
+
+  if (data.lastModified && typeof data.lastModified === 'object')
+    saveLastModified(data.lastModified)
 }

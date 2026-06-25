@@ -1,6 +1,6 @@
 import type { Bookmark } from '../types'
-import { computed, ref, watch } from 'vue'
-import { loadBookmarks, saveBookmarks } from '../utils/storage'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { loadBookmarks, saveBookmarks, touchDomain } from '../utils/storage'
 
 export function useBookmarks() {
   const allBookmarks = ref<Record<string, Bookmark[]>>(loadBookmarks())
@@ -18,8 +18,27 @@ export function useBookmarks() {
     allBookmarks.value[hostname.value] ?? [],
   )
 
+  // 同步模块写入 GM_setValue 后通过事件通知，重新加载数据以保持 UI 一致
+  // 标记外部变更以阻止 watch 再次派发 local-changed，避免 sync -> push -> 循环
+  let isExternalChange = false
+
+  function onExternalChange() {
+    isExternalChange = true
+    allBookmarks.value = loadBookmarks()
+    nextTick(() => {
+      isExternalChange = false
+    })
+  }
+  onMounted(() => window.addEventListener('any-bookmark:data-changed', onExternalChange))
+  onUnmounted(() => window.removeEventListener('any-bookmark:data-changed', onExternalChange))
+
   // persist on change
-  watch(allBookmarks, saveBookmarks, { deep: true })
+  watch(allBookmarks, (val) => {
+    saveBookmarks(val)
+    if (!isExternalChange) {
+      window.dispatchEvent(new CustomEvent('any-bookmark:local-changed'))
+    }
+  }, { deep: true })
 
   function add(name: string) {
     const trimmed = name.trim()
@@ -33,6 +52,7 @@ export function useBookmarks() {
     }
     data[hostname.value] = [entry, ...data[hostname.value]]
     allBookmarks.value = data
+    touchDomain(hostname.value)
   }
 
   function remove(index: number) {
@@ -42,6 +62,7 @@ export function useBookmarks() {
       delete data[hostname.value]
     }
     allBookmarks.value = data
+    touchDomain(hostname.value)
   }
 
   return { allBookmarks, hostname, currentBookmarks, add, remove }

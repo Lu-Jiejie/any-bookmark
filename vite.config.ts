@@ -26,6 +26,8 @@ export default defineConfig({
         downloadURL: 'https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js',
         updateURL: 'https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js',
         match: ['*://*/*'],
+        // 允许 GM_xmlhttpRequest 连接任意 WebDAV 服务器
+        connect: ['*'],
         // 仅在顶层窗口运行，避免注入到 iframe（如 GitHub 的 viewscreen 子域）
         noframes: true,
       },

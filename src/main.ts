@@ -38,6 +38,8 @@ w.__anyBookmarkApplyCss()
 // head（污染宿主页，且 shadow 内 UI 无样式）。这里把它们镜像进 shadow root，
 // 并将 head 中的原样式置为 media="not all" 使其不作用于宿主页（仍保留供 HMR 更新）。
 if (import.meta.env.DEV) {
+  let observer: MutationObserver | null = null
+
   const syncDevStyles = () => {
     const devStyles = document.head.querySelectorAll<HTMLStyleElement>(
       'style[data-vite-dev-id]',
@@ -50,11 +52,21 @@ if (import.meta.env.DEV) {
         el.media = 'not all'
     })
     w.__anyBookmarkCss = [css]
+
+    // applyCss 会修改 head 内的 propStyle.textContent，触发 childList 变更，
+    // 进而重新触发本 observer 造成无限循环。先断开观察，修改完再恢复。
+    observer?.disconnect()
     w.__anyBookmarkApplyCss()
+    observer?.observe(document.head, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    })
   }
 
   syncDevStyles()
-  new MutationObserver(syncDevStyles).observe(document.head, {
+  observer = new MutationObserver(syncDevStyles)
+  observer.observe(document.head, {
     childList: true,
     subtree: true,
     characterData: true,

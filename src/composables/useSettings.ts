@@ -4,7 +4,9 @@ import {
   exportSettings,
   importSettings,
   loadEnabledDomains,
+  loadLastModified,
   saveEnabledDomains,
+  saveLastModified,
 } from '../utils/storage'
 
 const currentDomain = location.hostname
@@ -25,6 +27,10 @@ function toggleCurrentDomain() {
 
   enabledDomains.value = [...next]
   saveEnabledDomains(enabledDomains.value)
+  // 更新 enabledDomains 时间戳，用于多设备冲突解决
+  const timestamps = loadLastModified()
+  timestamps.__enabled__ = Date.now()
+  saveLastModified(timestamps)
 }
 
 let initialized = false
