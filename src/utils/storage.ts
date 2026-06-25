@@ -95,6 +95,22 @@ export function getDomainRegex(domain: string): string | null {
   return loadDomainRegexes()[domain] || null
 }
 
+const LAST_SYNC_KEY = 'any-bookmark-last-sync-time'
+
+export function loadLastSyncTime(): number {
+  try {
+    const raw = gmGetValue(LAST_SYNC_KEY, '0')
+    return Number(raw) || 0
+  }
+  catch {
+    return 0
+  }
+}
+
+export function saveLastSyncTime(ts: number): void {
+  gmSetValue(LAST_SYNC_KEY, String(ts))
+}
+
 interface SettingsExport {
   version: number
   bookmarks: Record<string, Bookmark[]>

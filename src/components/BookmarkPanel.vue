@@ -29,13 +29,40 @@ watch(() => props.open, (val) => {
 
 const { hostname, currentBookmarks, add, remove, updateName } = useBookmarks()
 
-// Search
+// Search & sort
 const searchQuery = ref('')
+const sortOrder = ref<'recent' | 'oldest' | 'name-asc' | 'name-desc'>('recent')
+
 const filteredBookmarks = computed(() => {
+  let list = currentBookmarks.value
   const q = searchQuery.value.trim().toLowerCase()
-  if (!q)
-    return currentBookmarks.value
-  return currentBookmarks.value.filter(b => b.name.toLowerCase().includes(q))
+  if (q)
+    list = list.filter(b => b.name.toLowerCase().includes(q))
+  if (sortOrder.value !== 'recent') {
+    list = [...list]
+    if (sortOrder.value === 'name-asc')
+      list.sort((a, b) => a.name.localeCompare(b.name))
+    else if (sortOrder.value === 'name-desc')
+      list.sort((a, b) => b.name.localeCompare(a.name))
+    else if (sortOrder.value === 'oldest')
+      list.reverse()
+  }
+  return list
+})
+
+function cycleSort() {
+  const order: typeof sortOrder.value[] = ['recent', 'oldest', 'name-asc', 'name-desc']
+  const idx = order.indexOf(sortOrder.value)
+  sortOrder.value = order[(idx + 1) % order.length]
+}
+
+const sortLabel = computed(() => {
+  switch (sortOrder.value) {
+    case 'oldest': return '最旧'
+    case 'name-asc': return 'A-Z'
+    case 'name-desc': return 'Z-A'
+    default: return '最新'
+  }
 })
 
 const { current, paged, total } = usePagination(() => filteredBookmarks.value, PAGE_SIZE)
@@ -197,6 +224,16 @@ function applyRegex() {
                 outline-none rounded-lg w-full transition-200
               >
             </div>
+            <BaseButton
+              variant="default"
+              size="sm"
+              class="min-w-[4.5rem]"
+              :title="`排序：${sortLabel}`"
+              @click="cycleSort()"
+            >
+              <div i-mdi-sort text-sm flex-shrink-0 />
+              <span class="text-left w-7 inline-block">{{ sortLabel }}</span>
+            </BaseButton>
             <BaseButton
               variant="default"
               size="sm"

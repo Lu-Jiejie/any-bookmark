@@ -1,6 +1,6 @@
 import type { SyncConfig } from '../utils/sync'
 import { readonly, ref } from 'vue'
-import { saveBookmarks, saveEnabledDomains } from '../utils/storage'
+import { loadLastSyncTime, saveBookmarks, saveEnabledDomains, saveLastSyncTime } from '../utils/storage'
 import {
   clearSyncConfig,
   getSyncConfig,
@@ -13,15 +13,25 @@ import {
 
 export type SyncStatus = 'not_configured' | 'idle' | 'syncing' | 'error'
 
+const SYNC_INTERVAL = 300000 // 5 分钟
+const MAX_RETRY_DELAY = 60000 // 最大重试间隔 1 分钟
+
 const status = ref<SyncStatus>('not_configured')
 const lastSyncTime = ref<Date | null>(null)
 const error = ref<string | null>(null)
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
+let retryTimer: ReturnType<typeof setTimeout> | null = null
+let retryCount = 0
+
+export function shouldPullOnStartup(): boolean {
+  const last = loadLastSyncTime()
+  if (!last)
+    return true
+  return Date.now() - last > SYNC_INTERVAL
+}
 
 export function useSync() {
-  // 用 ref 而非 computed，因为 getSyncConfig() 读的是 GM 存储，
-  // Vue 无法追踪其变化，需要手动维护。
   const isConfigured = ref(getSyncConfig() !== null)
 
   if (isConfigured.value && status.value === 'not_configured') {
@@ -32,6 +42,37 @@ export function useSync() {
     status.value = s
     if (s !== 'error')
       error.value = null
+  }
+
+  function markSynced() {
+    const now = new Date()
+    lastSyncTime.value = now
+    saveLastSyncTime(now.getTime())
+    retryCount = 0
+    clearRetry()
+  }
+
+  function clearRetry() {
+    if (retryTimer !== null) {
+      clearTimeout(retryTimer)
+      retryTimer = null
+    }
+  }
+
+  function scheduleRetry(fn: () => Promise<void>) {
+    clearRetry()
+    const delay = Math.min(1000 * (2 ** retryCount), MAX_RETRY_DELAY)
+    retryCount++
+    retryTimer = setTimeout(async () => {
+      try {
+        await fn()
+        setStatus('idle')
+        markSynced()
+      }
+      catch {
+        scheduleRetry(fn)
+      }
+    }, delay)
   }
 
   function applyData(merged: { bookmarks: any, enabledDomains: string[] }) {
@@ -56,12 +97,13 @@ export function useSync() {
         const merged = mergeData(local, remote)
         applyData(merged)
       }
-      lastSyncTime.value = new Date()
+      markSynced()
       setStatus('idle')
     }
     catch (e) {
       setStatus('error')
       error.value = e instanceof Error ? e.message : '同步失败'
+      scheduleRetry(pullAndMerge)
       throw e
     }
   }
@@ -82,12 +124,13 @@ export function useSync() {
 
       await push(config, merged)
       applyData(merged)
-      lastSyncTime.value = new Date()
+      markSynced()
       setStatus('idle')
     }
     catch (e) {
       setStatus('error')
       error.value = e instanceof Error ? e.message : '同步失败'
+      scheduleRetry(() => doSync(true))
       if (!silent)
         throw e
     }
@@ -108,13 +151,14 @@ export function useSync() {
       else {
         await push(config, loadAllData())
       }
-      lastSyncTime.value = new Date()
+      markSynced()
       setStatus('idle')
-      startAutoSync(300000)
+      startAutoSync()
     }
     catch (e) {
       setStatus('error')
       error.value = e instanceof Error ? e.message : '配置失败'
+      scheduleRetry(() => setupSync(config))
       throw e
     }
   }
@@ -126,6 +170,7 @@ export function useSync() {
     isConfigured.value = false
     autoSyncEnabled.value = false
     stopAutoSync()
+    clearRetry()
     setStatus('not_configured')
     lastSyncTime.value = null
   }
@@ -136,15 +181,14 @@ export function useSync() {
       autoSyncEnabled.value = false
     }
     else {
-      startAutoSync(300000)
+      startAutoSync()
       autoSyncEnabled.value = true
     }
   }
 
-  function startAutoSync(intervalMs: number = 300000): void {
+  function startAutoSync(intervalMs: number = SYNC_INTERVAL): void {
     stopAutoSync()
     autoSyncEnabled.value = true
-    stopAutoSync()
     pollTimer = setInterval(async () => {
       if (status.value === 'syncing')
         return

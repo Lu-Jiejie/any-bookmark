@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import BookmarkPanel from './components/BookmarkPanel.vue'
 import TriggerButton from './components/TriggerButton.vue'
 import { currentDomainEnabled, setupSettings } from './composables/useSettings'
-import { useSync } from './composables/useSync'
+import { shouldPullOnStartup, useSync } from './composables/useSync'
 
 setupSettings()
 
@@ -15,11 +15,14 @@ const { pullAndMerge, sync, startAutoSync, stopAutoSync, isConfigured } = useSyn
 onMounted(async () => {
   if (!isConfigured.value)
     return
+  startAutoSync(300000)
+  // 距上次同步超过 5 分钟才拉取，避免多标签页重复请求
+  if (!shouldPullOnStartup())
+    return
   try {
     await pullAndMerge()
   }
   catch { /* 启动时拉取失败静默处理 */ }
-  startAutoSync(300000)
 })
 
 // 本地变更后延迟 3s 推送（不阻塞操作）
