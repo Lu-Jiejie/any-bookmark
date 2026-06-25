@@ -9,7 +9,7 @@
 ## 安装
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/)
-2. 在[GitHub](https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js)或GreasyFork安装此脚本。
+2. 在[GitHub](https://github.com/Lu-Jiejie/any-bookmark/raw/gh-pages/any-bookmark.user.js)或[GreasyFork](https://greasyfork.org/zh-CN/scripts/584343-any-bookmark)安装此脚本。
 
 ## 基础用法
 

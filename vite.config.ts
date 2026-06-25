@@ -5,6 +5,9 @@ import monkey, { cdn } from 'vite-plugin-monkey'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    minify: false,
+  },
   plugins: [
     UnoCSS(),
     vue(),
@@ -42,7 +45,9 @@ export default defineConfig({
         // 注意：@property 规则需由 main.ts 拆出注入文档级，否则 shadow 内变量失效
         cssSideEffects: (css) => {
           const w = globalThis as any
-          ;(w.__anyBookmarkCss ||= []).push(css)
+          // 在每个 } 后插入换行，防止 Greasyfork 将整段 CSS 识别为"压缩代码"
+          const formatted = css.replace(/\}/g, '}\n')
+          ;(w.__anyBookmarkCss ||= []).push(formatted)
           w.__anyBookmarkApplyCss?.()
         },
       },
