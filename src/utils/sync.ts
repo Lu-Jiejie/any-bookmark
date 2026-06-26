@@ -123,6 +123,9 @@ export async function pull(config: SyncConfig): Promise<SyncData | null> {
   if (result.status < 200 || result.status >= 300) {
     throw new Error(`下载失败 (HTTP ${result.status})`)
   }
+  if (!result.body || !result.body.trim()) {
+    return null
+  }
   try {
     const data = JSON.parse(result.body)
     // 兼容旧格式（无 version 字段或 version < 2）
