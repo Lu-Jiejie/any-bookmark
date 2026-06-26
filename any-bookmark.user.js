@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Any Bookmark
 // @namespace    https://github.com/Lu-Jiejie/any-bookmark
-// @version      0.0.4
+// @version      0.0.5
 // @author       Lu-Jiejie
 // @description  为每个网站提供独立的快速收藏夹功能，按照域名各自管理，适用于各种图站、论坛等。
 // @license      MIT
@@ -1338,6 +1338,7 @@
 		const result = await request("GET", config);
 		if (result.status === 404) return null;
 		if (result.status < 200 || result.status >= 300) throw new Error(`下载失败 (HTTP ${result.status})`);
+		if (!result.body || !result.body.trim()) return null;
 		try {
 			const data = JSON.parse(result.body);
 			return {
